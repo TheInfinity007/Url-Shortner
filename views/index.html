@@ -1,7 +1,5 @@
 <!DOCTYPE html>
-
 <html>
-
    <head>
       <title>URL Shortener</title>
       <link rel="shortcut icon" href="https://cdn.hyperdev.com/us-east-1%3A52a203ff-088b-420f-81be-45bf559d01b1%2Ffavicon.ico" type="image/x-icon"/>
@@ -24,7 +22,7 @@
         <p>
           example: <code>POST [project_url]/api/shorturl/new</code> - <code>https://www.google.com</code>
         </p>
-        <form action="api/shorturl/new" method="POST">
+        <form action="/api/shorturl/new" method="POST">
           <label for="url_input">URL to be shortened</label>
           <input id="url_input" type="text" name="url" value="https://www.freecodecamp.org">
           <input type="submit" value="POST URL">
