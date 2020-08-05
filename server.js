@@ -6,6 +6,8 @@ var mongoose = require('mongoose');
 const bodyParser = require('body-parser');
 const dns = require('dns');
 var cors = require('cors');
+const Counter = require('./models/counter');
+const UrlEntries = require('./models/urlEntries');
 
 
 var app = express();
@@ -34,18 +36,17 @@ app.get("/api/hello", function (req, res) {
 
 app.post('/api/shorturl/new', (req, res)=>{
 	let url = req.body.url;
+	const protocolRegex = /^https?:\/\/(.*)/i;
 	console.log(url);
-	var w3 = dns.lookup("https://www.w3schools.com", (err, address, family)=>{
+	var w3 = dns.lookup("www.google.com", (err, address, family)=>{
 		if(err) console.log("The error is ", err);
 		else console.log(address, family);
 	})
-	console.log(w3);
 	res.json({
 		original_url: req.body.url,
 		short_url: 5
-	})
-	// res.send("HELLO INFINITY");
-})
+	});
+});
 
 
 app.listen(port, function () {
