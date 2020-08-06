@@ -34,13 +34,49 @@ app.get("/api/hello", function (req, res) {
   res.json({greeting: 'hello API'});
 });
 
+function getCountAndIncrease(req, res, callback){
+	Counter.findOne({}, (err, foundCounter)=>{
+		if()
+	})
+}
+
 app.post('/api/shorturl/new', (req, res)=>{
 	let url = req.body.url;
-	const protocolRegex = /^https?:\/\/(.*)/i;
+	if(url.match(/\/$/i))	url = url.slice(0, -1);
 	console.log(url);
-	var w3 = dns.lookup("www.google.com", (err, address, family)=>{
-		if(err) console.log("The error is ", err);
-		else console.log(address, family);
+	const protocolRegex = /^https?:\/\/(.*)/i;
+	const protocolMatch = url.match(protocolRegex);
+
+	if(!protocolMatch){
+		return console.log("Invalid Protocol");
+	}
+	console.log("Valid Protocol");
+	let domain = protocolMatch[1];
+	let domainRegex = /^([a-z0-9_\-]+\.)+[a-zA-Z0-9_\-]+/i;
+	let domainNameMatch = domain.match(domainRegex);
+	if(!domainNameMatch){
+		return console.log("Invalid Domain Name");
+	}
+
+	var w3 = dns.lookup(domainNameMatch[0], (err, address, family)=>{
+		if(err){
+			console.log(err);
+			return console.log("Invalid Url");
+		}
+		console.log(address, family);
+		UrlEntries.findOne({"name": url}, (err, urlEntry)=>{
+			if(err){
+				console.log(err);
+			}else if(urlEntry){
+				res.json({ "original_url": urlEntry.name, "short_url": urlEntry.index });
+			}else{
+				Counter.findOne({}, (err, foundCounter)=>{
+					if(err) console.error(err);
+					if(foundCounter)
+				})
+			}
+
+		})
 	})
 	res.json({
 		original_url: req.body.url,
