@@ -1,5 +1,6 @@
 'use strict';
 
+require('dotenv').config();
 var express = require('express');
 var mongo = require('mongodb');
 var mongoose = require('mongoose');
@@ -14,13 +15,10 @@ var app = express();
 
 var port = process.env.PORT || 3000;
 
-/** this project needs a db !! **/ 
-// mongoose.connect(process.env.DB_URI);
-
+// mongodb url
+mongoose.connect(process.env.MONGODB_URI, { useUnifiedTopology: true, useNewUrlParser: true });
 app.use(cors());
 
-/** this project needs to parse POST bodies **/
-// you should mount the body-parser here
 app.use('/public', express.static(process.cwd() + '/public'));
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -29,12 +27,13 @@ app.get('/', function(req, res){
 });
 
   
-// your first API endpoint... 
+// first API endpoint... 
 app.get("/api/hello", function (req, res) {
   res.json({greeting: 'hello API'});
 });
 
 function getCountAndIncrease(req, res, callback){
+	console.log("In the getCountAndIncrease function");
 	Counter.findOne({}, (err, foundCounter)=>{
 		if(err) return console.error(err);
 		if(foundCounter){
@@ -49,7 +48,8 @@ function getCountAndIncrease(req, res, callback){
 			newCounter.save((err)=>{
 				if(err) return console.error(err);
 				newCounter.count = 1;
-				console.llog(newCounter);
+				console.log(newCounter);
+				console.log("New counter created");
 				callback(newCounter.count);
 			})
 		}
@@ -64,30 +64,34 @@ app.post('/api/shorturl/new', (req, res)=>{
 	const protocolMatch = url.match(protocolRegex);
 
 	if(!protocolMatch){
-		return console.log("Invalid Protocol");
+		console.log("Invalid Protocol");
+		return res.json({ error: "invalid URL" });
 	}
 	console.log("Valid Protocol");
 	let domain = protocolMatch[1];
 	let domainRegex = /^([a-z0-9_\-]+\.)+[a-zA-Z0-9_\-]+/i;
 	let domainNameMatch = domain.match(domainRegex);
 	if(!domainNameMatch){
-		return console.log("Invalid Domain Name");
+		console.log("Invalid Domain Name");
+		return res.json({ error: "invalid URL" });
 	}
 
 	dns.lookup(domainNameMatch[0], (err, address, family)=>{
 		if(err){
 			console.log(err);
-			return console.log("Invalid Url");
+			return res.json({ error: "invalid URL" });
 		}
 		console.log(address, family);
 		console.log("HEII");
-		UrlEntries.find({}, (err, urlEntry)=>{
+		UrlEntries.findOne({ url: url }, (err, urlEntry)=>{
 			console.log("YUP")
 			if(err){
 				return console.log(err);
-			}else if(urlEntry){
+			}
+			else if(urlEntry){
 				console.log("Found Old Entry")
-				res.json({ "original_url": urlEntry.name, "short_url": urlEntry.index });
+				console.log(urlEntry);
+				return res.json({ "original_url": urlEntry.url, "short_url": urlEntry.index });
 			}else{
 				console.log("Does Not found Old Entry");
 				getCountAndIncrease(req, res, (count)=>{
@@ -105,11 +109,18 @@ app.post('/api/shorturl/new', (req, res)=>{
 			}
 		})
 	})
-	res.json({
-		original_url: req.body.url,
-		short_url: 5
-	});
 });
+
+app.get('/api/shorturl/:index', (req, res)=>{
+	let int = parseInt(req.params.index);
+	if(!int) return res.json({ error: "No short URL found for the given input" });
+	UrlEntries.findOne({ index: req.params.index }, (err, foundEntry)=>{
+		if(err) return console.error(err);
+		console.log(foundEntry)
+		if(!foundEntry) return res.json({ error: "invalid URL" });
+		return res.redirect(foundEntry.url);
+	});
+})
 
 
 app.listen(port, function () {
