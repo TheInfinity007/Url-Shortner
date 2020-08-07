@@ -29,23 +29,19 @@ app.get("/api/hello", function (req, res) {
 });
 
 function getCountAndIncrease(req, res, callback){
-	console.log("In the getCountAndIncrease function");
 	Counter.findOne({}, (err, foundCounter)=>{
 		if(err) return console.error(err);
 		if(foundCounter){
-			console.log("Old Counter found", foundCounter);
 			foundCounter.count = foundCounter.count+1;
 			foundCounter.save();	
 			callback(foundCounter.count);
 		} 
 		else{
-			console.log("creating new Counter");
 			const newCounter = new Counter();
 			newCounter.save((err)=>{
 				if(err) return console.error(err);
 				newCounter.count = 1;
 				console.log(newCounter);
-				console.log("New counter created");
 				callback(newCounter.count);
 			})
 		}
@@ -77,19 +73,14 @@ app.post('/api/shorturl/new', (req, res)=>{
 			console.log(err);
 			return res.json({ error: "invalid URL" });
 		}
-		console.log(address, family);
-		console.log("HEII");
 		UrlEntries.findOne({ url: url }, (err, urlEntry)=>{
-			console.log("YUP")
 			if(err){
 				return console.log(err);
 			}
 			else if(urlEntry){
-				console.log("Found Old Entry")
 				console.log(urlEntry);
 				return res.json({ "original_url": urlEntry.url, "short_url": urlEntry.index });
 			}else{
-				console.log("Does Not found Old Entry");
 				getCountAndIncrease(req, res, (count)=>{
 					console.log("Creating New Url Entry");
 					const newUrlEntry = UrlEntries({
@@ -120,7 +111,7 @@ app.get('/api/shorturl/:index', (req, res)=>{
 
 app.get('/*', function(req, res){
   res.sendFile(process.cwd() + '/views/index.html');
-});
+});	
 
 app.listen(port, function () {
   console.log('Node.js listening ...');
