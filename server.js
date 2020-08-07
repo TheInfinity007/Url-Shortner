@@ -22,10 +22,6 @@ app.use(cors());
 app.use('/public', express.static(process.cwd() + '/public'));
 app.use(bodyParser.urlencoded({extended: true}));
 
-app.get('/', function(req, res){
-  res.sendFile(process.cwd() + '/views/index.html');
-});
-
   
 // first API endpoint... 
 app.get("/api/hello", function (req, res) {
@@ -122,6 +118,9 @@ app.get('/api/shorturl/:index', (req, res)=>{
 	});
 })
 
+app.get('/*', function(req, res){
+  res.sendFile(process.cwd() + '/views/index.html');
+});
 
 app.listen(port, function () {
   console.log('Node.js listening ...');
