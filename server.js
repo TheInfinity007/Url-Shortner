@@ -36,14 +36,30 @@ app.get("/api/hello", function (req, res) {
 
 function getCountAndIncrease(req, res, callback){
 	Counter.findOne({}, (err, foundCounter)=>{
-		if()
+		if(err) return console.error(err);
+		if(foundCounter){
+			console.log("Old Counter found", foundCounter);
+			foundCounter.count = foundCounter.count+1;
+			foundCounter.save();	
+			callback(foundCounter.count);
+		} 
+		else{
+			console.log("creating new Counter");
+			const newCounter = new Counter();
+			newCounter.save((err)=>{
+				if(err) return console.error(err);
+				newCounter.count = 1;
+				console.llog(newCounter);
+				callback(newCounter.count);
+			})
+		}
 	})
 }
 
 app.post('/api/shorturl/new', (req, res)=>{
 	let url = req.body.url;
 	if(url.match(/\/$/i))	url = url.slice(0, -1);
-	console.log(url);
+	console.log(url);	
 	const protocolRegex = /^https?:\/\/(.*)/i;
 	const protocolMatch = url.match(protocolRegex);
 
@@ -58,24 +74,35 @@ app.post('/api/shorturl/new', (req, res)=>{
 		return console.log("Invalid Domain Name");
 	}
 
-	var w3 = dns.lookup(domainNameMatch[0], (err, address, family)=>{
+	dns.lookup(domainNameMatch[0], (err, address, family)=>{
 		if(err){
 			console.log(err);
 			return console.log("Invalid Url");
 		}
 		console.log(address, family);
-		UrlEntries.findOne({"name": url}, (err, urlEntry)=>{
+		console.log("HEII");
+		UrlEntries.find({}, (err, urlEntry)=>{
+			console.log("YUP")
 			if(err){
-				console.log(err);
+				return console.log(err);
 			}else if(urlEntry){
+				console.log("Found Old Entry")
 				res.json({ "original_url": urlEntry.name, "short_url": urlEntry.index });
 			}else{
-				Counter.findOne({}, (err, foundCounter)=>{
-					if(err) console.error(err);
-					if(foundCounter)
+				console.log("Does Not found Old Entry");
+				getCountAndIncrease(req, res, (count)=>{
+					console.log("Creating New Url Entry");
+					const newUrlEntry = UrlEntries({
+						"url": url,
+						"index": count
+					});
+					newUrlEntry.save((err)=>{
+						if(err) return console.error(err);
+						console.log(newUrlEntry);
+						res.json({ "original_url": url, "short_url": count  });
+					})
 				})
 			}
-
 		})
 	})
 	res.json({
